@@ -59,9 +59,9 @@
   args:
     chdir: "{{ _run_temp_dir.path }}/src/"
   when:
-    - _.stdout != 'main'
-    - _.stdout != 'develop'
-    - _.stdout != ''
+    - _git_branch != 'main'
+    - _git_branch != 'develop'
+    - _git_branch != ''
 
 - name: Copy changes to upstream
   ansible.posix.synchronize:
@@ -124,7 +124,7 @@
     _branch: "{% if (_git_branch == 'main') or (_git_branch == 'develop') or (_git_branch == '') %}\
               master\
               {% else %}\
-              {{ _.stdout }}\
+              {{ _git_branch }}\
               {% endif %}"
     _message: >
       Automated merge from {{ lookup('env', 'DRONE_COMMIT_SHA') }}
