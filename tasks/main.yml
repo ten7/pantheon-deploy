@@ -15,7 +15,7 @@
       dest: "{{ _run_temp_dir.path }}/id_ssh"
     - data: "{{ pantheon_deploy.target.ssh_pub_base64 }}"
       dest: "{{ _run_temp_dir.path }}/id_ssh.pub"
-  no_log: {{ pantheon_deploy.debug | default(true) | bool }}
+  no_log: "{{ pantheon_deploy.debug | default(true) | bool }}"
 
 - name: Get the source repo's current branch
   shell: "git rev-parse --abbrev-ref HEAD"
