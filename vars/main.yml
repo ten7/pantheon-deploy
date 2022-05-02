@@ -6,7 +6,7 @@ _pantheon_deploy_defaults:
     npm_dir: ''
     npm_build_script_name: 'build'
   target:
-    ssh_key_b64: ''
-    ssh_pub_b64: ''
+    ssh_key_base64: ''
+    ssh_pub_base64: ''
     tag_prefix: 'pantheon_test_'
     repo_url: ''

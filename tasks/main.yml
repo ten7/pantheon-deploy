@@ -7,13 +7,13 @@
 
 - name: Copy the key to the temp dir
   copy:
-    content: "{{ item.data }}"
+    content: "{{ item.data | b64decode }}"
     dest: "{{ item.dest }}"
     mode: "0600"
   loop:
-    - data: "{{ pantheon_deploy.ssh_key }}"
+    - data: "{{ pantheon_deploy.ssh_key_base64 }}"
       dest: "{{ _run_temp_dir.path }}/id_ssh"
-    - data: "{{ pantheon_deploy.ssh_pub }}"
+    - data: "{{ pantheon_deploy.ssh_pub_base64 }}"
       dest: "{{ _run_temp_dir.path }}/id_ssh.pub"
   no_log: true
 

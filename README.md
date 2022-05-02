@@ -45,8 +45,8 @@ pantheon_deploy:
     npm_dir: 'path/in/repo/to/package.json'
     npm_build_script_name: 'build'
   target:
-    ssh_key_b64: 'abcdef1234567890'
-    ssh_pub_b64: 'abcdef1234567890'
+    ssh_key_base64: 'abcdef1234567890'
+    ssh_pub_base64: 'abcdef1234567890'
     repo_url: "ssh://codeserver.dev.abcd-ef12-3456-7890@codeserver.dev.abcd-ef12-3456-7890.drush.in:2222/~/repository.git"
 ```
 
@@ -55,8 +55,8 @@ Where:
 * `pantheon_deploy.source.git_dir` is the path to locally cloned git repository from the external git host. Required.
 * `pantheon_deploy.build.npm_dir` is the path inside the repo to package.json. Optional, defaults to the `package.json` in the root of the repo.
 * `pantheon_deploy.build.npm_build_script_name` is the name of the script to invoke with `npm run`. Optional, defaults to `build`.
-* `pantheon_deploy.target.ssh_key_b64` is the Base64 encoded SSH private key used to communicate with Pantheon.
-* `pantheon_deploy.target.ssh_pub_b64` is the Base64 encoded SSH public key used to communicate with Pantheon.
+* `pantheon_deploy.target.ssh_key_base64` is the Base64 encoded SSH private key used to communicate with Pantheon.
+* `pantheon_deploy.target.ssh_pub_base64` is the Base64 encoded SSH public key used to communicate with Pantheon.
 * `pantheon_deploy.target.repo_url` is the SSH URL to the Pantheon site repository.
 
 ## Dependencies
@@ -67,9 +67,22 @@ Where:
 
 Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
+```yaml
     - hosts: servers
+      vars:
+        pantheon_deploy:
+          source:
+            git_dir: 'path/to/source/git/dir'
+          build:
+            npm_dir: 'path/in/repo/to/package.json'
+            npm_build_script_name: 'build'
+          target:
+            ssh_key_base64: 'abcdef1234567890'
+            ssh_pub_base64: 'abcdef1234567890'
+            repo_url: "ssh://codeserver.dev.abcd-ef12-3456-7890@codeserver.dev.abcd-ef12-3456-7890.drush.in:2222/~/repository.git"
       roles:
-         - { role: username.rolename, x: 42 }
+         - { role: ten7.pantheon_deploy }
+```
 
 ## License
 
