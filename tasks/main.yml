@@ -65,7 +65,7 @@
 
 - name: Copy changes to upstream
   ansible.posix.synchronize:
-    src: "{{ git_dir }}/"
+    src: "{{ pantheon_deploy.source.git_dir }}/"
     dest: "{{ _run_temp_dir.path }}/src/"
     delete: yes
     archive: yes
@@ -74,32 +74,32 @@
 
 - name: Check if .gitignore-pantheon exists
   stat:
-    name: "{{ git_dir }}/.gitignore-pantheon"
+    name: "{{ pantheon_deploy.source.git_dir }}/.gitignore-pantheon"
   register: _gitignore_pantheon
 
 - name: Overwrite .gitignore on target if .gitignore-pantheon exists
   copy:
-    src: "{{ git_dir }}/.gitignore-pantheon"
+    src: "{{ pantheon_deploy.source.git_dir }}/.gitignore-pantheon"
     dest: "{{ _run_temp_dir.path }}/src/.gitignore"
   when:
     - _gitignore_pantheon.stat.exists == true
 
 - name: Check if package.json exists
   stat:
-    name: "{{ npm_dir | default(_run_temp_dir.path + '/src') }}/package.json"
+    name: "{{ pantheon_deploy.build.npm_dir | default(_run_temp_dir.path + '/src') }}/package.json"
   register: _package_json
 
 - name: Install NPM
   shell: "npm ci"
   args:
-    chdir: "{{ npm_dir | default(_run_temp_dir.path + '/src') }}"
+    chdir: "{{ pantheon_deploy.build.npm_dir | default(_run_temp_dir.path + '/src') }}"
   when:
     - _package_json.stat.exists == true
 
 - name: Run npm build
-  shell: "npm run {{ npm_build_script_name | default('build') }}"
+  shell: "npm run {{ pantheon_deploy.build.npm_build_script_name | default('build') }}"
   args:
-    chdir: "{{ npm_dir | default(_run_temp_dir.path + '/src') }}"
+    chdir: "{{ pantheon_deploy.build.npm_dir | default(_run_temp_dir.path + '/src') }}"
   when:
     - _package_json.stat.exists == true
 
@@ -109,9 +109,6 @@
   args:
     chdir: "{{ _run_temp_dir.path }}/src/"
   register: _git_status
-
-- debug:
-    var: _git_status
 
 - name: Add, commit, and push upstream if changes
   shell: >
