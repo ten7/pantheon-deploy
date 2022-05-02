@@ -11,17 +11,19 @@
     dest: "{{ item.dest }}"
     mode: "0600"
   loop:
-    - data: "{{ pantheon_deploy.ssh_key_base64 }}"
+    - data: "{{ pantheon_deploy.target.ssh_key_base64 }}"
       dest: "{{ _run_temp_dir.path }}/id_ssh"
-    - data: "{{ pantheon_deploy.ssh_pub_base64 }}"
+    - data: "{{ pantheon_deploy.target.ssh_pub_base64 }}"
       dest: "{{ _run_temp_dir.path }}/id_ssh.pub"
-  no_log: true
+  no_log: {{ pantheon_deploy.debug | default(true) | bool }}
 
 - name: Get the source repo's current branch
   shell: "git rev-parse --abbrev-ref HEAD"
   args:
     chdir: "{{ pantheon_deploy.source.git_dir }}"
   register: _git_branch
+  when:
+    - pantheon_deploy.source.git_branch | default('') == ''
 
 - name: Clone master branch from upstream
   ansible.builtin.git:
