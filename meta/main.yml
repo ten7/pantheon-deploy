@@ -1,0 +1,27 @@
+galaxy_info:
+  author: socketwench
+  description: Deploys a site to Pantheon from an external git repo
+  company: TEN7 Interactive
+
+  issue_tracker_url: https://github.com/ten7/pantheon-deploy/issues
+
+  license: GPL-3.0-only
+
+  min_ansible_version: 2.9
+
+  platforms:
+  - name: Linux
+    versions:
+    - all
+
+  galaxy_tags:
+    - Pantheon
+    - Drupal
+    - Wordpress
+    - git
+
+dependencies:
+  - ansible.posix
+  - git
+  - npm
+  - rsync

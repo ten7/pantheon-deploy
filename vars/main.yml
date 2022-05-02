@@ -1,0 +1,12 @@
+---
+_pantheon_deploy_defaults:
+  source:
+    git_dir: ''
+  build:
+    npm_dir: ''
+    npm_build_script_name: 'build'
+  target:
+    ssh_key_b64: ''
+    ssh_pub_b64: ''
+    tag_prefix: 'pantheon_test_'
+    repo_url: ''

@@ -1,0 +1,145 @@
+---
+- name: Create a temp directory to store files needed by the run
+  tempfile:
+    state: directory
+    prefix: "pantheon-deploy-"
+  register: _run_temp_dir
+
+- name: Copy the key to the temp dir
+  copy:
+    content: "{{ item.data }}"
+    dest: "{{ item.dest }}"
+    mode: "0600"
+  loop:
+    - data: "{{ pantheon_deploy.ssh_key }}"
+      dest: "{{ _run_temp_dir.path }}/id_ssh"
+    - data: "{{ pantheon_deploy.ssh_pub }}"
+      dest: "{{ _run_temp_dir.path }}/id_ssh.pub"
+  no_log: true
+
+- name: Get the source repo's current branch
+  shell: "git rev-parse --abbrev-ref HEAD"
+  args:
+    chdir: "{{ pantheon_deploy.source.git_dir }}"
+  register: _git_branch
+
+- name: Clone master branch from upstream
+  ansible.builtin.git:
+    repo: "{{ pantheon_deploy.target.repo_url }}"
+    dest: "{{ _run_temp_dir.path }}/src"
+    clone: yes
+    force: yes
+    recursive: yes
+    bare: no
+    update: yes
+    accept_hostkey: yes
+    ssh_opts: "-o IdentityFile={{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
+    key_file: "{{ _run_temp_dir.path }}/id_ssh"
+    version: "master"
+  environment:
+    GIT_TERMINAL_PROMPT: 0
+
+- name: Create/change upstream branch unless on main or develop
+  shell: >
+    git switch -C {{ _git_branch.stdout }}
+  args:
+    chdir: "{{ _run_temp_dir.path }}/src/"
+  when:
+    - _.stdout != 'main'
+    - _.stdout != 'develop'
+    - _.stdout != ''
+
+- name: Copy changes to upstream
+  ansible.posix.synchronize:
+    src: "{{ git_dir }}/"
+    dest: "{{ _run_temp_dir.path }}/src/"
+    delete: yes
+    archive: yes
+    rsync_opts: "--exclude=.git/"
+  delegate_to: localhost
+
+- name: Check if .gitignore-pantheon exists
+  stat:
+    name: "{{ git_dir }}/.gitignore-pantheon"
+  register: _gitignore_pantheon
+
+- name: Overwrite .gitignore on target if .gitignore-pantheon exists
+  copy:
+    src: "{{ git_dir }}/.gitignore-pantheon"
+    dest: "{{ _run_temp_dir.path }}/src/.gitignore"
+  when:
+    - _gitignore_pantheon.stat.exists == true
+
+- name: Check if package.json exists
+  stat:
+    name: "{{ npm_dir | default(_run_temp_dir.path + '/src') }}/package.json"
+  register: _package_json
+
+- name: Install NPM
+  shell: "npm ci"
+  args:
+    chdir: "{{ npm_dir | default(_run_temp_dir.path + '/src') }}"
+  when:
+    - _package_json.stat.exists == true
+
+- name: Run npm build
+  shell: "npm run {{ npm_build_script_name | default('build') }}"
+  args:
+    chdir: "{{ npm_dir | default(_run_temp_dir.path + '/src') }}"
+  when:
+    - _package_json.stat.exists == true
+
+- name: Check if there are git changes
+  shell: >
+    git status --porcelain
+  args:
+    chdir: "{{ _run_temp_dir.path }}/src/"
+  register: _git_status
+
+- debug:
+    var: _git_status
+
+- name: Add, commit, and push upstream if changes
+  shell: >
+    git add -A &&
+    git commit -m "{{ _message }}" &&
+    git push -u origin {{ _branch }}
+  args:
+    chdir: "{{ _run_temp_dir.path }}/src/"
+  vars:
+    _branch: "{% if (_git_branch.stdout == 'main') or (_git_branch.stdout == 'develop') or (_git_branch.stdout == '') %}\
+              master\
+              {% else %}\
+              {{ _.stdout }}\
+              {% endif %}"
+    _message: >
+      Automated merge from {{ lookup('env', 'DRONE_COMMIT_SHA') }}
+  environment:
+    GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
+  when:
+    - _git_status.stdout | default('') != ''
+
+- name: Get most recent tag if on main
+  shell: >
+    git tag -l | grep pantheon_test_ | sort -V | tail -n 1
+  args:
+    chdir: "{{ _run_temp_dir.path }}/src/"
+  register: _last_tag
+  when:
+    - _git_branch.stdout == 'main'
+
+- name: Tag the release if on main
+  shell: >
+    git tag {{ _next_tag }} && git push --tags
+  args:
+    chdir: "{{ _run_temp_dir.path }}/src/"
+  vars:
+    _next_tag: "{% if _last_tag.stdout | default('') != '' %}\
+                pantheon_test_{{ _last_tag.stdout.split('_') | last | int + 1}}\
+                {% else %}\
+                pantheon_test_1\
+                {% endif %}"
+  when:
+    - _git_branch.stdout == 'main'
+  environment:
+    GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
