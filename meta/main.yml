@@ -20,5 +20,4 @@ galaxy_info:
     - Wordpress
     - git
 
-dependencies:
-  - ansible.posix
+dependencies: []
