@@ -59,7 +59,7 @@
     accept_hostkey: yes
     ssh_opts: "-o IdentityFile={{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
     key_file: "{{ _run_temp_dir.path }}/id_ssh"
-    single_branch: yes
+    single_branch: no
     version: "master"
   environment:
     GIT_TERMINAL_PROMPT: 0
@@ -74,6 +74,8 @@
     - _git_branch != 'main'
     - _git_branch != 'develop'
     - _git_branch != ''
+  environment:
+    GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
 
 - name: Copy changes to upstream
   ansible.posix.synchronize:
