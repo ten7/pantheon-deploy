@@ -55,9 +55,9 @@ Where:
 * `pantheon_deploy.source.git_dir` is the path to locally cloned git repository from the external git host. Required.
 * `pantheon_deploy.build.npm_dir` is the path inside the repo to package.json. Optional, defaults to the `package.json` in the root of the repo.
 * `pantheon_deploy.build.npm_build_script_name` is the name of the script to invoke with `npm run`. Optional, defaults to `build`.
-* `pantheon_deploy.target.ssh_key_base64` is the Base64 encoded SSH private key used to communicate with Pantheon.
-* `pantheon_deploy.target.ssh_pub_base64` is the Base64 encoded SSH public key used to communicate with Pantheon.
-* `pantheon_deploy.target.repo_url` is the SSH URL to the Pantheon site repository.
+* `pantheon_deploy.target.ssh_key_base64` is the Base64 encoded SSH private key used to communicate with Pantheon. Required.
+* `pantheon_deploy.target.ssh_pub_base64` is the Base64 encoded SSH public key used to communicate with Pantheon. Required.
+* `pantheon_deploy.target.repo_url` is the SSH URL to the Pantheon site repository. Required.
 
 ## Dependencies
 

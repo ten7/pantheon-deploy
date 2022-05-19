@@ -1,4 +1,14 @@
 ---
+- name: Smoke test the environment
+  fail:
+    msg: "The pantheon_deploy variable is undefined or missing required parameters."
+  when: "\
+        (pantheon_deploy.source.git_dir is not defined) or \
+        (pantheon_deploy.target.ssh_key_base64 is not defined) or \
+        (pantheon_deploy.target.ssh_pub_base64 is not defined) or \
+        (pantheon_deploy.target.repo_url is not defined) \
+        "
+
 - name: Create a temp directory to store files needed by the run
   tempfile:
     state: directory
@@ -49,13 +59,15 @@
     accept_hostkey: yes
     ssh_opts: "-o IdentityFile={{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
     key_file: "{{ _run_temp_dir.path }}/id_ssh"
+    single_branch: yes
     version: "master"
   environment:
     GIT_TERMINAL_PROMPT: 0
 
 - name: Create/change upstream branch unless on main or develop
   shell: >
-    git switch -C {{ _git_branch }}
+    git switch -C {{ _git_branch }} &&
+    git pull
   args:
     chdir: "{{ _run_temp_dir.path }}/src/"
   when:
