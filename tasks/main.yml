@@ -39,15 +39,33 @@
   when:
     - pantheon_deploy.source.git_branch | default('') == ''
 
-- set_fact:
+- name: Resolve the source git branch name
+  set_fact:
     _git_branch: "{{ pantheon_deploy.source.git_branch | default(_git_branch_detected.stdout) }}"
 
-- fail:
+- name: Fail if we could not resolve the source branch name.
+  fail:
     msg: "Could not detect git branch, and git_branch was not configured"
   when:
     _git_branch == ''
 
-- name: Clone master branch from upstream
+- name: Resolve the target git branch name
+  set_fact:
+    _target_branch: "{% if (_git_branch == 'main') or (_git_branch == 'develop') or (_git_branch == '') %}\
+                         master\
+                         {% else %}\
+                         {{ _git_branch }}\
+                         {% endif %}"
+
+- name: Check if the target branch exists
+  shell: >
+    git ls-remote --exit-code --heads {{ pantheon_deploy.target.repo_url }} {{ _target_branch }}
+  ignore_errors: yes
+  environment:
+    GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o StrictHostKeyChecking=accept-new -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
+  register: _target_branch_exists
+
+- name: Clone branch from upstream
   ansible.builtin.git:
     repo: "{{ pantheon_deploy.target.repo_url }}"
     dest: "{{ _run_temp_dir.path }}/src"
@@ -59,21 +77,21 @@
     accept_hostkey: yes
     ssh_opts: "-o IdentityFile={{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
     key_file: "{{ _run_temp_dir.path }}/id_ssh"
-    single_branch: no
-    version: "master"
+    version: "{% if _target_branch_exists.rc == 0 %}\
+              {{ _target_branch }}\
+              {% else %}\
+              master\
+              {% endif %}"
   environment:
     GIT_TERMINAL_PROMPT: 0
 
-- name: Create/change upstream branch unless on main or develop
+- name: Create upstream branch unless on main or develop
   shell: >
-    git switch -C {{ _git_branch }} &&
-    git pull
+    git switch -C {{ _git_branch }}
   args:
     chdir: "{{ _run_temp_dir.path }}/src/"
   when:
-    - _git_branch != 'main'
-    - _git_branch != 'develop'
-    - _git_branch != ''
+    - _target_branch_exists.rc != 0
   environment:
     GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
 
@@ -136,15 +154,10 @@
   shell: >
     git add -A &&
     git commit -m "{{ _message }}" &&
-    git push -u origin {{ _branch }}
+    git push -u origin {{ _target_branch }}
   args:
     chdir: "{{ _run_temp_dir.path }}/src/"
   vars:
-    _branch: "{% if (_git_branch == 'main') or (_git_branch == 'develop') or (_git_branch == '') %}\
-              master\
-              {% else %}\
-              {{ _git_branch }}\
-              {% endif %}"
     _message: >
       Automated merge from {{ lookup('env', 'DRONE_COMMIT_SHA') }}
   environment:
