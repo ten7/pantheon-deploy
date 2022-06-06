@@ -8,5 +8,4 @@ _pantheon_deploy_defaults:
   target:
     ssh_key_base64: ''
     ssh_pub_base64: ''
-    tag_prefix: 'pantheon_test_'
     repo_url: ''

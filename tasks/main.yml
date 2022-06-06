@@ -51,7 +51,7 @@
 
 - name: Resolve the target git branch name
   set_fact:
-    _target_branch: "{% if (_git_branch == 'main') or (_git_branch == 'develop') or (_git_branch == '') %}\
+    _target_branch: "{% if (_git_branch == 'main') or (_git_branch == '') %}\
                          master\
                          {% else %}\
                          {{ _git_branch }}\
@@ -85,7 +85,7 @@
   environment:
     GIT_TERMINAL_PROMPT: 0
 
-- name: Create upstream branch unless on main or develop
+- name: Create upstream branch unless it already exists
   shell: >
     git switch -C {{ _git_branch }}
   args:
@@ -164,28 +164,3 @@
     GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
   when:
     - _git_status.stdout | default('') != ''
-
-- name: Get most recent tag if on main
-  shell: >
-    git tag -l | grep pantheon_test_ | sort -V | tail -n 1
-  args:
-    chdir: "{{ _run_temp_dir.path }}/src/"
-  register: _last_tag
-  when:
-    - _git_branch == 'main'
-
-- name: Tag the release if on main
-  shell: >
-    git tag {{ _next_tag }} && git push --tags
-  args:
-    chdir: "{{ _run_temp_dir.path }}/src/"
-  vars:
-    _next_tag: "{% if _last_tag.stdout | default('') != '' %}\
-                pantheon_test_{{ _last_tag.stdout.split('_') | last | int + 1}}\
-                {% else %}\
-                pantheon_test_1\
-                {% endif %}"
-  when:
-    - _git_branch == 'main'
-  environment:
-    GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
