@@ -7,7 +7,7 @@
         (pantheon_deploy.source.git_branch is not defined) or \
         (pantheon_deploy.target.ssh_key_base64 is not defined) or \
         (pantheon_deploy.target.ssh_pub_base64 is not defined) or \
-        (pantheon_deploy.target.repo_url is not defined) \
+        (pantheon_deploy.target.repo_url is not defined) or \
         (pantheon_deploy.target.git_branch is not defined) \
         "
 
@@ -35,7 +35,7 @@
   ignore_errors: yes
   environment:
     GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o StrictHostKeyChecking=accept-new -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
-  register: pantheon_deploy.target.git_branch_exists
+  register: _target_branch_exists
 
 - name: Clone branch from upstream
   ansible.builtin.git:
@@ -49,7 +49,7 @@
     accept_hostkey: yes
     ssh_opts: "-o IdentityFile={{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
     key_file: "{{ _run_temp_dir.path }}/id_ssh"
-    version: "{% if pantheon_deploy.target.git_branch_exists.rc == 0 %}\
+    version: "{% if _target_branch_exists.rc == 0 %}\
               {{ pantheon_deploy.target.git_branch }}\
               {% else %}\
               master\
@@ -63,7 +63,7 @@
   args:
     chdir: "{{ _run_temp_dir.path }}/src/"
   when:
-    - pantheon_deploy.target.git_branch_exists.rc != 0
+    - _target_branch_exists.rc != 0
   environment:
     GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
 
