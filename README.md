@@ -41,6 +41,7 @@ If `package.json` is in the root of your repository (or you defined `pantheon_de
 pantheon_deploy:
   source:
     git_dir: 'path/to/source/git/dir'
+    git_branch: 'main'
   build:
     npm_dir: 'path/in/repo/to/package.json'
     npm_build_script_name: 'build'
@@ -48,16 +49,22 @@ pantheon_deploy:
     ssh_key_base64: 'abcdef1234567890'
     ssh_pub_base64: 'abcdef1234567890'
     repo_url: "ssh://codeserver.dev.abcd-ef12-3456-7890@codeserver.dev.abcd-ef12-3456-7890.drush.in:2222/~/repository.git"
+    git_branch: 'master'
+    git_commit_message: "Made with <3 by robots"
 ```
 
 Where:
 
 * `pantheon_deploy.source.git_dir` is the path to locally cloned git repository from the external git host. Required.
+* `pantheon_deploy.source.git_branch` is the branch to use in the locally cloned git repository from the exteneral git host.. Required.
 * `pantheon_deploy.build.npm_dir` is the path inside the repo to package.json. Optional, defaults to the `package.json` in the root of the repo.
 * `pantheon_deploy.build.npm_build_script_name` is the name of the script to invoke with `npm run`. Optional, defaults to `build`.
 * `pantheon_deploy.target.ssh_key_base64` is the Base64 encoded SSH private key used to communicate with Pantheon. Required.
 * `pantheon_deploy.target.ssh_pub_base64` is the Base64 encoded SSH public key used to communicate with Pantheon. Required.
 * `pantheon_deploy.target.repo_url` is the SSH URL to the Pantheon site repository. Required.
+* `pantheon_deploy.target.git_branch` is the git branch to push to the Pantheon site repository. Required.
+* `pantheon_deploy.target.git_commit_message` is the git commit message to use when pushing to the Pantheon site repository. Optional, defaults to "Commit by ten7.pantheon_deploy".
+
 
 ## Dependencies
 
@@ -73,6 +80,7 @@ Including an example of how to use your role (for instance, with variables passe
         pantheon_deploy:
           source:
             git_dir: 'path/to/source/git/dir'
+            git_branch: 'main'
           build:
             npm_dir: 'path/in/repo/to/package.json'
             npm_build_script_name: 'build'
@@ -80,6 +88,8 @@ Including an example of how to use your role (for instance, with variables passe
             ssh_key_base64: 'abcdef1234567890'
             ssh_pub_base64: 'abcdef1234567890'
             repo_url: "ssh://codeserver.dev.abcd-ef12-3456-7890@codeserver.dev.abcd-ef12-3456-7890.drush.in:2222/~/repository.git"
+            git_branch: 'master'
+            git_commit_message: "Made with <3 by robots"
       roles:
          - { role: ten7.pantheon_deploy }
 ```

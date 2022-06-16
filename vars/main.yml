@@ -2,6 +2,7 @@
 _pantheon_deploy_defaults:
   source:
     git_dir: ''
+    git_branch: 'main'
   build:
     npm_dir: ''
     npm_build_script_name: 'build'
@@ -9,3 +10,5 @@ _pantheon_deploy_defaults:
     ssh_key_base64: ''
     ssh_pub_base64: ''
     repo_url: ''
+    git_branch: 'master'
+    git_commit_message: 'Commit by ten7.pantheon_deploy'
