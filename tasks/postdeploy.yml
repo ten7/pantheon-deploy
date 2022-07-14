@@ -1,0 +1,42 @@
+---
+- fail:
+    msg: "pantheon_deploy.target.machine_token is empty or missing."
+  when:
+    - pantheon_deploy.target.machine_token | default('') == ''
+- fail:
+    msg: "pantheon_deploy.target.site_id is empty or missing."
+  when:
+    - pantheon_deploy.target.site_id | default('') == ''
+- name: Login with Terminus
+  shell: >
+    terminus auth:login --machine-token={{ pantheon_deploy.target.machine_token | default('') }}
+  environment:
+    TERMINUS_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
+  timeout: 30
+  
+- name: Check the status of workflows
+  shell: >
+    terminus
+    workflow:list
+    "{{ pantheon_deploy.target.site_id }}"
+    --format=json
+    --no-interaction
+  register: _workflow_status
+  until: "(_workflow_status.stdout \
+    | from_json \ 
+    | dict2items \
+    | json_query('[*].value') \
+    | selectattr('env', '==', pantheon_deploy.target.env) \
+    | selectattr('status', '==', 'running') \
+    | length) == 0"
+  retries: 20
+  delay: 15
+  environment:
+    TERMINUS_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
+  timeout: 30
+  
+- shell: >
+    terminus remote:drush -- {{ pantheon_deploy.target.site_id }}.{{ pantheon_deploy.target.env }} {{ item }}
+  loop: "{{ pantheon_deploy.post_deploy.drush_commands | default([]) }}"
+  when:
+  - pantheon_deploy.target.env | default('') == ''

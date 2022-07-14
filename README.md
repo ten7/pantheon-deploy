@@ -48,6 +48,9 @@ pantheon_deploy:
   target:
     ssh_key_base64: 'abcdef1234567890'
     ssh_pub_base64: 'abcdef1234567890'
+    pantheon_machine_token: ''
+    site_id: ''
+    env_id: ''
     repo_url: "ssh://codeserver.dev.abcd-ef12-3456-7890@codeserver.dev.abcd-ef12-3456-7890.drush.in:2222/~/repository.git"
     git_branch: 'master'
     git_commit_message: "Made with <3 by robots"
@@ -65,10 +68,128 @@ Where:
 * `pantheon_deploy.target.git_branch` is the git branch to push to the Pantheon site repository. Required.
 * `pantheon_deploy.target.git_commit_message` is the git commit message to use when pushing to the Pantheon site repository. Optional, defaults to "Commit by ten7.pantheon_deploy".
 
+### Secrets
+
+Sometimes you may need to template files during the build process which contain sensitive information such as API keys, passwords, or certificates. You can accomplish this using `secrets`.
+
+```yaml
+pantheon_deploy:
+  source:
+    git_dir: 'path/to/source/git/dir'
+    git_branch: 'main'
+  build:
+    npm_dir: 'path/in/repo/to/package.json'
+    npm_build_script_name: 'build'
+  target:
+    ssh_key_base64: 'abcdef1234567890'
+    ssh_pub_base64: 'abcdef1234567890'
+    pantheon_machine_token: ''
+    site_id: ''
+    env_id: ''
+    repo_url: "ssh://codeserver.dev.abcd-ef12-3456-7890@codeserver.dev.abcd-ef12-3456-7890.drush.in:2222/~/repository.git"
+    git_branch: 'master'
+    git_commit_message: "Made with <3 by robots"
+  secrets:
+    - path: "web/private/secrets/super_secret_stuff.txt"
+      value: "catsAreCute"
+```
+
+Where:
+
+* `pantheon_deploy.secrets` is a list of secrets to add to the Pantheon repository. Optional.
+
+Each item in `pantheon_deploy.secrets` has the following values:
+
+* `path` is the path to write the secret, relative to the root of the Pantheon repository. Required.
+* `value` is the value to write. Required.
+
+When running this role from a CI system, you may have secrets available as environment variables. In that case, you can use the following to write them to the file:
+
+```yaml
+pantheon_deploy:
+...
+  secrets:
+    - path: "web/private/secrets/super_secret_stuff.txt"
+      value: "{{ lookup('env', 'ENVVAR_FROM_CI') }}"
+```
+
+### Post Deploy commands
+
+This role has the ability to execute Drush commands post deploy through `terminus`. 
+
+Note that this functionality may be useful in some cases where [Quicksilver hooks](https://pantheon.io/docs/quicksilver#hooks) cannot be used.
+
+```yaml
+pantheon_deploy:
+  source:
+    git_dir: 'path/to/source/git/dir'
+    git_branch: 'main'
+  build:
+    npm_dir: 'path/in/repo/to/package.json'
+    npm_build_script_name: 'build'
+  target:
+    ssh_key_base64: 'abcdef1234567890'
+    ssh_pub_base64: 'abcdef1234567890'
+    pantheon_machine_token: ''
+    site_id: ''
+    env_id: ''
+    repo_url: "ssh://codeserver.dev.abcd-ef12-3456-7890@codeserver.dev.abcd-ef12-3456-7890.drush.in:2222/~/repository.git"
+    git_branch: 'master'
+    git_commit_message: "Made with <3 by robots"
+  post_deploy:
+    drush_commands:
+      - "updb -y"
+      - "cim -y"
+      - "cr"
+```
+
+Where:
+
+* `pantheon_deploy.target.pantheon_machine_token` is a Pantheon Machine Token used for Terminus commands. Required for post-deploy commands.
+* `pantheon_deploy.target.site_id` is the Pantheon Site ID. Required for post-deploy commands.
+* `pantheon_deploy.target.env` is the Pantheon environment name. Required for post-deploy commands.
+* `pantheon_deploy.post_deploy.drush_commands` is a list of Drush commands to execute on the target environment.
+
+
+### Custom tasks
+
+Often, you may wish to execute custom CI code during the build and deployment process. You can accomplish that with `include_tasks`:
+
+```yaml
+pantheon_deploy:
+  source:
+    git_dir: 'path/to/source/git/dir'
+    git_branch: 'main'
+  build:
+    npm_dir: 'path/in/repo/to/package.json'
+    npm_build_script_name: 'build'
+    include_tasks:
+      - "path/to/my/build.yml"
+  target:
+    ssh_key_base64: 'abcdef1234567890'
+    ssh_pub_base64: 'abcdef1234567890'
+    pantheon_machine_token: ''
+    site_id: ''
+    env_id: ''
+    repo_url: "ssh://codeserver.dev.abcd-ef12-3456-7890@codeserver.dev.abcd-ef12-3456-7890.drush.in:2222/~/repository.git"
+    git_branch: 'master'
+    git_commit_message: "Made with <3 by robots"
+  post_deploy:
+    include_tasks:
+      - "path/to/my/post_deploy.yml"
+```
+
+Where:
+
+* `pantheon_deploy.build.include_tasks` is a list of paths to an Ansible tasks file to execute during the build but before the deploy. Optional.
+* `pantheon_deploy.post_deploy.include_tasks` is a list of paths to an Ansible tasks file to execute after the deploy. Optional.
+
+The paths for `include_tasks` can be absolute, or relative to the playbook from which this role is executing.
 
 ## Dependencies
 
 * ansible.posix
+* The `terminus` command must be installed to use Post Deploy tasks.
 
 ## Example Playbook
 

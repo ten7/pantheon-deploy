@@ -88,32 +88,17 @@
   when:
     - _gitignore_pantheon.stat.exists == true
 
-- name: Generate the npm directory path
-  set_fact:
-    _npm_dir: "\
-      {{ _run_temp_dir.path }}/src\
-      {% if pantheon_deploy.build.npm_dir is defined %}\
-      /{{ pantheon_deploy.build.npm_dir }}\
-      {% endif %}"
+- name: Work with npm
+  include_tasks: "npm.yml"
 
-- name: Check if package.json exists
-  stat:
-    name: "{{ _npm_dir }}/package.json"
-  register: _package_json
-
-- name: Install NPM
-  shell: "npm ci"
-  args:
-    chdir: "{{ _npm_dir }}"
+- name: Work with secrets
+  include_tasks: "secrets.yml"
   when:
-    - _package_json.stat.exists == true
+    - pantheon_deploy.secrets is defined
 
-- name: Run npm build
-  shell: "npm run {{ pantheon_deploy.build.npm_build_script_name | default('build') }}"
-  args:
-    chdir: "{{ _npm_dir }}"
-  when:
-    - _package_json.stat.exists == true
+- name: Do custom build tasks if any
+  include_tasks: "{{ item }}"
+  loop: "{{ pantheon_deploy.build.include_tasks | default([]) }}"
 
 - name: Check if there are git changes
   shell: >
@@ -135,3 +120,13 @@
     GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
   when:
     - _git_status.stdout | default('') != ''
+
+- name: Do post-deploy
+  include_tasks: "postdeploy.yml"
+  when:
+    - pantheon_deploy.post_deploy is defined
+
+- name: Do custom post-deploy tasks if any
+  include_tasks: "{{ item }}"
+  loop: "{{ pantheon_deploy.post_deploy.include_tasks | default([]) }}"
+

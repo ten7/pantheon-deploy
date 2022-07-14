@@ -9,6 +9,10 @@ _pantheon_deploy_defaults:
   target:
     ssh_key_base64: ''
     ssh_pub_base64: ''
+    pantheon_machine_token: ''
+    site_id: ''
+    env_id: ''
     repo_url: ''
     git_branch: 'master'
     git_commit_message: 'Commit by ten7.pantheon_deploy'
+
