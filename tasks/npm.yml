@@ -13,7 +13,7 @@
   register: _package_json
 
 - name: Install NPM
-  shell: "npm ci"
+  shell: "npm {{ pantheon_deploy.build.npm_install_cmd | default('ci') }}"
   args:
     chdir: "{{ _npm_dir }}"
   when:
