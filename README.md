@@ -115,6 +115,25 @@ pantheon_deploy:
       value: "{{ lookup('env', 'ENVVAR_FROM_CI') }}"
 ```
 
+As an added option you may export secrets in a JSON file:
+
+```yaml
+pantheon_deploy:
+...
+  secrets:
+    json:
+      - path: "web/private/secrets/super_secret_data.json"
+        values:
+          secret_stuff: "stuff"
+          secret_things: "things"
+```
+
+Which would produce the following JSON:
+```json
+{"secret_stuff":"stuff","secret_things":"things"}
+```
+
+
 ### Post Deploy commands
 
 This role has the ability to execute Drush commands post deploy through `terminus`. 
