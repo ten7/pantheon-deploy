@@ -100,10 +100,18 @@ Where:
 
 * `pantheon_deploy.secrets` is a list of secrets to add to the Pantheon repository. Optional.
 
-Each item in `pantheon_deploy.secrets` has the following values:
+`pantheon_deploy.secrets` consists of the following forms:
 
+* `files` is for writing simple file secrets
+* `json` is for writing unicode json secrets
+
+Each item in `pantheon_deploy.secrets.file` has the following values:
 * `path` is the path to write the secret, relative to the root of the Pantheon repository. Required.
 * `value` is the value to write. Required.
+
+Each item in `pantheon_deploy.secrets.json` has the following values:
+* `path` is the same as the above.
+* `values` is all the items that are then encoded to JSON, this can be nested to create complex JSON files.
 
 When running this role from a CI system, you may have secrets available as environment variables. In that case, you can use the following to write them to the file:
 
@@ -111,8 +119,9 @@ When running this role from a CI system, you may have secrets available as envir
 pantheon_deploy:
 ...
   secrets:
-    - path: "web/private/secrets/super_secret_stuff.txt"
-      value: "{{ lookup('env', 'ENVVAR_FROM_CI') }}"
+    files:
+      - path: "web/private/secrets/super_secret_stuff.txt"
+        value: "{{ lookup('env', 'ENVVAR_FROM_CI') }}"
 ```
 
 As an added option you may export secrets in a JSON file:
@@ -236,6 +245,14 @@ Including an example of how to use your role (for instance, with variables passe
             repo_url: "ssh://codeserver.dev.abcd-ef12-3456-7890@codeserver.dev.abcd-ef12-3456-7890.drush.in:2222/~/repository.git"
             git_branch: 'master'
             git_commit_message: "Made with <3 by robots"
+          secrets:
+            files:
+              - path: 'path/to/file'
+                value: 'Hello world!'
+            json:
+              - path: 'path/to/json'
+                values:
+                  hello: "world"
       roles:
          - { role: ten7.pantheon_deploy }
 ```
