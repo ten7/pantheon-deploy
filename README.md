@@ -129,8 +129,12 @@ pantheon_deploy:
 ```
 
 Which would produce the following JSON:
+
 ```json
-{"secret_stuff":"stuff","secret_things":"things"}
+{
+  "secret_stuff"  : "stuff",
+  "secret_things" : "things"
+}
 ```
 
 
