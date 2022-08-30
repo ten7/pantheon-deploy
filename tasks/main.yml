@@ -120,6 +120,7 @@
     GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
   when:
     - _git_status.stdout | default('') != ''
+    - 'nothing to commit, working tree clean' not in _git_status.stdout
 
 - name: Do post-deploy
   include_tasks: "postdeploy.yml"
