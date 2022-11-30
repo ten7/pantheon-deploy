@@ -4,8 +4,8 @@ _pantheon_deploy_defaults:
     git_dir: ''
     git_branch: 'main'
   build:
-    npm_dir: ''
-    npm_build_script_name: 'build'
+    - npm_dir: ''
+      npm_build_script_name: 'build'
   target:
     ssh_key_base64: ''
     ssh_pub_base64: ''
