@@ -3,8 +3,8 @@
   set_fact:
     _npm_dir: "\
       {{ _run_temp_dir.path }}/src\
-      {% if pantheon_deploy.build.npm_dir is defined %}\
-      /{{ pantheon_deploy.build.npm_dir }}\
+      {% if item.npm_dir is defined %}\
+      /{{ item.npm_dir }}\
       {% endif %}"
 
 - name: Check if package.json exists
@@ -13,15 +13,16 @@
   register: _package_json
 
 - name: Install NPM
-  shell: "npm {{ pantheon_deploy.build.npm_install_cmd | default('ci') }}"
+  shell: "npm {{ item.npm_install_cmd | default('ci') }}"
   args:
     chdir: "{{ _npm_dir }}"
   when:
     - _package_json.stat.exists == true
 
 - name: Run npm build
-  shell: "npm run {{ pantheon_deploy.build.npm_build_script_name | default('build') }}"
+  shell: "npm run {{ item.npm_build_script_name | default('build') }}"
   args:
     chdir: "{{ _npm_dir }}"
   when:
     - _package_json.stat.exists == true
+

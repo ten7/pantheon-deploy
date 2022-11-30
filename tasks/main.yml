@@ -88,8 +88,15 @@
   when:
     - _gitignore_pantheon.stat.exists == true
 
-- name: Work with npm
+- name: Work with npm list
   include_tasks: "npm.yml"
+  loop: "{{ pantheon_deploy.build.npm }}"
+  when: ( pantheon_deploy.build.npm is defined ) and ( pantheon_deploy.build.npm | type_debug == "list" )
+
+- name: Work with npm item
+  include_tasks: "npm.yml"
+  loop: "{{ [pantheon_deploy.build.npm] }}"
+  when: ( pantheon_deploy.build.npm is defined ) and ( pantheon_deploy.build.npm | type_debug != "list" )  
 
 - name: Work with secrets
   include_tasks: "secrets.yml"
