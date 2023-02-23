@@ -25,3 +25,14 @@
     chdir: "{{ _npm_dir }}"
   when:
     - _package_json.stat.exists == true
+  
+- name: Copy changes to source
+  ansible.posix.synchronize:
+    src: "{{ _run_temp_dir.path }}/src/"
+    dest: "{{ pantheon_deploy.source.git_dir }}/"
+    delete: no
+    archive: yes
+    rsync_opts: "--exclude=.git/"
+  delegate_to: localhost
+  when:
+    - pantheon_deploy.build.copy == true
