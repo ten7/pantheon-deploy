@@ -11,7 +11,7 @@
   shell: >
     terminus auth:login --machine-token={{ pantheon_deploy.target.machine_token | default('') }}
   environment:
-    TERMINUS_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
+    TERMINUS_SSH_COMMAND: "ssh -i {{ _run_dir }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
   timeout: 30
   
 - name: Check the status of workflows
@@ -32,7 +32,7 @@
   retries: 20
   delay: 15
   environment:
-    TERMINUS_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
+    TERMINUS_SSH_COMMAND: "ssh -i {{ _run_dir }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
   timeout: 30
   
 - shell: >
