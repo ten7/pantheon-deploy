@@ -113,7 +113,7 @@
 - name: Work with npm
   include_tasks: "npm.yml"
   when:
-    - pantheon_deploy.build.skip != true
+    - pantheon_deploy.build.skip | default(false) != true
 
 - name: Work with secrets
   include_tasks: "secrets.yml"

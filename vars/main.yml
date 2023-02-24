@@ -6,6 +6,7 @@ _pantheon_deploy_defaults:
   build:
     npm_dir: ''
     npm_build_script_name: 'build'
+    skip: false
   target:
     clone_delete: yes
     build_dir: ''
