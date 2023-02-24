@@ -15,4 +15,5 @@ _pantheon_deploy_defaults:
     repo_url: ''
     git_branch: 'master'
     git_commit_message: 'Commit by ten7.pantheon_deploy'
+    git_force_push: true
 
