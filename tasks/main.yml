@@ -30,7 +30,7 @@
 - name: Create the defined directory to store files needed by the run
   file:
     state: directory
-    path: "{{ pantheon_deploy.source.build_dir }}"
+    path: "{{ pantheon_deploy.target.build_dir }}"
   register: _build_dir
   when:
     - ( pantheon_deploy.target.build_dir | default('') != '' ) and not ( _run_target_dir_stat.exists )
