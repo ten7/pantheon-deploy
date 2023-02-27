@@ -12,10 +12,32 @@
         "
 
 - name: Create a temp directory to store files needed by the run
+  notify: delete temp items
   tempfile:
     state: directory
     prefix: "pantheon-deploy-"
   register: _run_temp_dir
+  when:
+    - pantheon_deploy.target.build_dir | default('') == ''
+
+- name: Check for defined build directory
+  stat:
+    path: "{{ pantheon_deploy.target.build_dir }}"
+  register: _run_build_dir_stat
+  when:
+    - pantheon_deploy.target.build_dir | default('') != ''
+
+- name: Create the defined directory to store files needed by the run
+  file:
+    state: directory
+    path: "{{ pantheon_deploy.target.build_dir }}"
+  register: _build_dir
+  when:
+    - ( pantheon_deploy.target.build_dir | default('') != '' ) and not ( _run_target_dir_stat.exists )
+
+- name: Set target build directory
+  set_fact:
+    _run_dir: _build_dir.path | default(_run_temp_dir.path)
 
 - name: Copy the key to the temp dir
   copy:
@@ -24,9 +46,9 @@
     mode: "0600"
   loop:
     - data: "{{ pantheon_deploy.target.ssh_key_base64 }}"
-      dest: "{{ _run_temp_dir.path }}/id_ssh"
+      dest: "{{ _run_dir }}/id_ssh"
     - data: "{{ pantheon_deploy.target.ssh_pub_base64 }}"
-      dest: "{{ _run_temp_dir.path }}/id_ssh.pub"
+      dest: "{{ _run_dir }}/id_ssh.pub"
   no_log: "{{ pantheon_deploy.debug | default(true) | bool }}"
 
 - name: Check if the target branch exists
@@ -34,21 +56,21 @@
     git ls-remote --exit-code --heads {{ pantheon_deploy.target.repo_url }} {{ pantheon_deploy.target.git_branch }}
   ignore_errors: yes
   environment:
-    GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o StrictHostKeyChecking=accept-new -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
+    GIT_SSH_COMMAND: "ssh -i {{ _run_dir }}/id_ssh -o StrictHostKeyChecking=accept-new -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
   register: _target_branch_exists
 
 - name: Clone branch from upstream
   ansible.builtin.git:
     repo: "{{ pantheon_deploy.target.repo_url }}"
-    dest: "{{ _run_temp_dir.path }}/src"
+    dest: "{{ _run_dir }}/src"
     clone: yes
     force: yes
     recursive: yes
     bare: no
     update: yes
     accept_hostkey: yes
-    ssh_opts: "-o IdentityFile={{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
-    key_file: "{{ _run_temp_dir.path }}/id_ssh"
+    ssh_opts: "-o IdentityFile={{ _run_dir }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
+    key_file: "{{ _run_dir }}/id_ssh"
     version: "{% if _target_branch_exists.rc == 0 %}\
               {{ pantheon_deploy.target.git_branch }}\
               {% else %}\
@@ -61,17 +83,17 @@
   shell: >
     git switch -C {{ pantheon_deploy.source.git_branch }}
   args:
-    chdir: "{{ _run_temp_dir.path }}/src/"
+    chdir: "{{ _run_dir }}/src/"
   when:
     - _target_branch_exists.rc != 0
   environment:
-    GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
+    GIT_SSH_COMMAND: "ssh -i {{ _run_dir }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
 
 - name: Copy changes to upstream
   ansible.posix.synchronize:
     src: "{{ pantheon_deploy.source.git_dir }}/"
-    dest: "{{ _run_temp_dir.path }}/src/"
-    delete: yes
+    dest: "{{ _run_dir }}/src/"
+    delete: {{ pantheon_deploy.target.clone_delete | default('yes') }}
     archive: yes
     rsync_opts: "--exclude=.git/"
   delegate_to: localhost
@@ -84,14 +106,14 @@
 - name: Overwrite .gitignore on target if .gitignore-pantheon exists
   copy:
     src: "{{ pantheon_deploy.source.git_dir }}/.gitignore-pantheon"
-    dest: "{{ _run_temp_dir.path }}/src/.gitignore"
+    dest: "{{ _run_dir }}/src/.gitignore"
   when:
     - _gitignore_pantheon.stat.exists == true
 
 - name: Work with npm
   include_tasks: "npm.yml"
   when:
-    - pantheon_deploy.build.skip != true
+    - pantheon_deploy.build.skip | default(false) != true
 
 - name: Work with secrets
   include_tasks: "secrets.yml"
@@ -106,7 +128,7 @@
   shell: >
     git status --porcelain
   args:
-    chdir: "{{ _run_temp_dir.path }}/src/"
+    chdir: "{{ _run_dir }}/src/"
   register: _git_status
 
 - name: Add, commit, and push upstream if changes
@@ -115,11 +137,11 @@
     git commit -m "{{ _message }}" &&
     git push -u origin {{ pantheon_deploy.target.git_branch }}
   args:
-    chdir: "{{ _run_temp_dir.path }}/src/"
+    chdir: "{{ _run_dir }}/src/"
   vars:
     _message: "{{ pantheon_deploy.target.git_commit_message | default('_pantheon_deploy_defaults.target.git_commit_message') }}"
   environment:
-    GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
+    GIT_SSH_COMMAND: "ssh -i {{ _run_dir }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
   when: ( _git_status.stdout | default('') != '' ) and ( 'nothing to commit, working tree clean' not in _git_status.stdout ) and (pantheon_deploy.target.git_force_push | default(true) != true)
 
 - name: Add, commit, and force push upstream changes
@@ -128,11 +150,11 @@
     git commit -m "{{ _message }}" &&
     git push -u origin {{ pantheon_deploy.target.git_branch }} --force
   args:
-    chdir: "{{ _run_temp_dir.path }}/src/"
+    chdir: "{{ _run_dir }}/src/"
   vars:
     _message: "{{ pantheon_deploy.target.git_commit_message | default('_pantheon_deploy_defaults.target.git_commit_message') }}"
   environment:
-    GIT_SSH_COMMAND: "ssh -i {{ _run_temp_dir.path }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
+    GIT_SSH_COMMAND: "ssh -i {{ _run_dir }}/id_ssh -o PubkeyAcceptedAlgorithms=+ssh-rsa -o HostkeyAlgorithms=+ssh-rsa"
   when: ( _git_status.stdout | default('') != '' ) and ( 'nothing to commit, working tree clean' not in _git_status.stdout ) and (pantheon_deploy.target.git_force_push | default(true) == true)
 
 - name: Do post-deploy
