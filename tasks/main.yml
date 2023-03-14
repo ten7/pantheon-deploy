@@ -23,7 +23,7 @@
 - name: Check for defined build directory
   stat:
     path: "{{ pantheon_deploy.target.build_dir }}"
-  register: _run_build_dir_stat
+  register: _run_target_dir_stat
   when:
     - pantheon_deploy.target.build_dir | default('') != ''
 
@@ -37,7 +37,7 @@
 
 - name: Set target build directory
   set_fact:
-    _run_dir: _build_dir.path | default(_run_temp_dir.path)
+    _run_dir: "{{ _build_dir.path | default(_run_temp_dir.path) }}"
 
 - name: Copy the key to the temp dir
   copy:
