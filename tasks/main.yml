@@ -93,7 +93,7 @@
   ansible.posix.synchronize:
     src: "{{ pantheon_deploy.source.git_dir }}/"
     dest: "{{ _run_dir }}/src/"
-    delete: {{ pantheon_deploy.target.clone_delete | default('yes') }}
+    delete: "{{ pantheon_deploy.target.clone_delete | default('yes') }}"
     archive: yes
     rsync_opts: "--exclude=.git/"
   delegate_to: localhost
