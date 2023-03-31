@@ -33,7 +33,7 @@
     path: "{{ pantheon_deploy.target.build_dir }}"
   register: _build_dir
   when:
-    - ( pantheon_deploy.target.build_dir | default('') != '' ) and not ( _run_target_dir_stat.exists )
+    - ( pantheon_deploy.target.build_dir | default('') != '' ) and not ( _run_target_dir_stat.stat.exists )
 
 - name: Set target build directory
   set_fact:
