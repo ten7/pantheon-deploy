@@ -35,9 +35,17 @@
   when:
     - ( pantheon_deploy.target.build_dir | default('') != '' ) and not ( _run_target_dir_stat.stat.exists )
 
-- name: Set target build directory
+- name: Set target build directory if defined
   set_fact:
-    _run_dir: "{{ _build_dir.path | default(_run_temp_dir.path) }}"
+    _run_dir: "{{ _build_dir.path }}"
+  when:
+    - _build_dir | default('') != ''
+
+- name: Set target build directory if temp
+  set_fact:
+    _run_dir: "{{ _run_temp_dir.path }}"
+  when:
+    - _run_temp_dir | default('') != ''
 
 - name: Copy the key to the temp dir
   copy:
