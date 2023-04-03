@@ -17,35 +17,10 @@
     state: directory
     prefix: "pantheon-deploy-"
   register: _run_temp_dir
-  when:
-    - pantheon_deploy.target.build_dir | default('') == ''
 
-- name: Check for defined build directory
-  stat:
-    path: "{{ pantheon_deploy.target.build_dir }}"
-  register: _run_target_dir_stat
-  when:
-    - pantheon_deploy.target.build_dir | default('') != ''
-
-- name: Create the defined directory to store files needed by the run
-  file:
-    state: directory
-    path: "{{ pantheon_deploy.target.build_dir }}"
-  register: _build_dir
-  when:
-    - ( pantheon_deploy.target.build_dir | default('') != '' ) and not ( _run_target_dir_stat.stat.exists )
-
-- name: Set target build directory if defined
-  set_fact:
-    _run_dir: "{{ _build_dir.path }}"
-  when:
-    - _build_dir | default('') != ''
-
-- name: Set target build directory if temp
+- name: Set target build directory
   set_fact:
     _run_dir: "{{ _run_temp_dir.path }}"
-  when:
-    - _run_temp_dir | default('') != ''
 
 - name: Copy the key to the temp dir
   copy:
