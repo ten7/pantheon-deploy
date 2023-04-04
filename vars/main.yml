@@ -9,7 +9,6 @@ _pantheon_deploy_defaults:
     skip: false
   target:
     clone_delete: yes
-    build_dir: ''
     ssh_key_base64: ''
     ssh_pub_base64: ''
     pantheon_machine_token: ''
