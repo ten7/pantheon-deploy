@@ -4,7 +4,6 @@
     msg: "The pantheon_deploy variable is undefined or missing required parameters."
   when: "\
         (pantheon_deploy.source.git_dir is not defined) or \
-        (pantheon_deploy.source.git_branch is not defined) or \
         (pantheon_deploy.target.ssh_key_base64 is not defined) or \
         (pantheon_deploy.target.ssh_pub_base64 is not defined) or \
         (pantheon_deploy.target.repo_url is not defined) or \
@@ -64,7 +63,7 @@
 
 - name: Create upstream branch unless it already exists
   shell: >
-    git switch -C {{ pantheon_deploy.source.git_branch }}
+    git switch -C {{ pantheon_deploy.target.git_branch }}
   args:
     chdir: "{{ _run_dir }}/src/"
   when:

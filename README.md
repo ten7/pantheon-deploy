@@ -41,7 +41,6 @@ If `package.json` is in the root of your repository (or you defined `pantheon_de
 pantheon_deploy:
   source:
     git_dir: 'path/to/source/git/dir'
-    git_branch: 'main'
   build:
     npm_dir: 'path/in/repo/to/package.json'
     npm_install_cmd: 'ci'
@@ -59,8 +58,7 @@ pantheon_deploy:
 
 Where:
 
-* `pantheon_deploy.source.git_dir` is the path to locally cloned git repository from the external git host. Required.
-* `pantheon_deploy.source.git_branch` is the branch to use in the locally cloned git repository from the exteneral git host.. Required.
+* `pantheon_deploy.source.git_dir` is the path to locally cloned git repository from the external git host. It assumed that this repo is already cloned and on the expected branch for the deploy. Required.
 * `pantheon_deploy.build.npm_dir` is the path inside the repo to package.json. Optional, defaults to the `package.json` in the root of the repo.
 * `pantheon_deploy.build.npm_install_cmd` is the install command to use with `npm`, including switches. Optional, defaults to `ci`.
 * `pantheon_deploy.build.npm_build_script_name` is the name of the script to invoke with `npm run`. Optional, defaults to `build`.
@@ -78,7 +76,6 @@ Sometimes you may need to template files during the build process which contain 
 pantheon_deploy:
   source:
     git_dir: 'path/to/source/git/dir'
-    git_branch: 'main'
   build:
     npm_dir: 'path/in/repo/to/package.json'
     npm_build_script_name: 'build'
@@ -125,7 +122,6 @@ Note that this functionality may be useful in some cases where [Quicksilver hook
 pantheon_deploy:
   source:
     git_dir: 'path/to/source/git/dir'
-    git_branch: 'main'
   build:
     npm_dir: 'path/in/repo/to/package.json'
     npm_build_script_name: 'build'
@@ -161,7 +157,6 @@ Often, you may wish to execute custom CI code during the build and deployment pr
 pantheon_deploy:
   source:
     git_dir: 'path/to/source/git/dir'
-    git_branch: 'main'
   build:
     npm_dir: 'path/in/repo/to/package.json'
     npm_build_script_name: 'build'
@@ -203,7 +198,6 @@ Including an example of how to use your role (for instance, with variables passe
         pantheon_deploy:
           source:
             git_dir: 'path/to/source/git/dir'
-            git_branch: 'main'
           build:
             npm_dir: 'path/in/repo/to/package.json'
             npm_build_script_name: 'build'
