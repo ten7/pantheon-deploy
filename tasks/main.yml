@@ -31,7 +31,7 @@
       dest: "{{ _run_dir }}/id_ssh"
     - data: "{{ pantheon_deploy.target.ssh_pub_base64 }}"
       dest: "{{ _run_dir }}/id_ssh.pub"
-  no_log: "{{ pantheon_deploy.debug | default(true) | bool }}"
+  no_log: "{{ pantheon_deploy.debug | default(false) | bool != true }}"
 
 - name: Check if the target branch exists
   shell: >
