@@ -113,6 +113,27 @@
     chdir: "{{ _run_dir }}/src/"
   register: _git_status
 
+- name: Check if there are git changes
+  shell: >
+    git status --porcelain
+  args:
+    chdir: "{{ _run_dir }}/src/"
+  register: _git_status
+  
+- name: "Set git user.email for the target repo"
+  community.general.git_config:
+    name: user.email
+    repo: "{{ _run_dir }}/src/"
+    scope: local
+    value: "{{ pantheon_deploy.target.git_user_email | default('bot@example.com') }}"
+
+- name: "Set git user.name for the target repo"
+  community.general.git_config:
+    name: user.name
+    repo: "{{ _run_dir }}/src/"
+    scope: local
+    value: "{{ pantheon_deploy.target.git_user_name | default('Bot') }}"
+
 - name: Add, commit, and push upstream if changes
   shell: >
     git add -A &&
